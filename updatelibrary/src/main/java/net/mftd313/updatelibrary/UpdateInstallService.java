@@ -1,5 +1,7 @@
 package net.mftd313.updatelibrary;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -8,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
@@ -52,6 +55,8 @@ public final class UpdateInstallService extends Service {
 
     private void showDownloadSuccessNotification() {
 
+        initNotificationChannel();
+
         Toast.makeText(this, UpdateRepository.getInstance(this).getDownloadedNotificationText(),
                 Toast.LENGTH_LONG).show();
 
@@ -76,5 +81,17 @@ public final class UpdateInstallService extends Service {
         builder.setContentIntent(clickPendingIntent);
 
         startForeground(UpdateConstants.NOTIFICATION_ID, builder.build());
+    }
+
+    private void initNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            final String channelId = getString(R.string.app_name);
+            final String channelName = getString(R.string.app_name);
+            final NotificationChannel defaultChannel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_MIN);
+            final NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (manager != null) {
+                manager.createNotificationChannel(defaultChannel);
+            }
+        }
     }
 }

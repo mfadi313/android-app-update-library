@@ -14,19 +14,32 @@ import static android.content.Context.DOWNLOAD_SERVICE;
 final class UpdateCore {
 
     static void beginInstall(Context context, Uri uri) {
+        File file = new File(context.getExternalFilesDir(null), uri.getLastPathSegment());
+        if (!file.exists() || !UpdateCore.isDownloadSuccess(context, uri)) {
+            return;
+        }
+        if (UpdateLibrary.getInstallStartedListener() != null) {
+            UpdateLibrary.getInstallStartedListener().onInstallStarted(context, uri);
+        }
         File apkFile = new File(context.getExternalFilesDir(null), uri.getLastPathSegment());
         Uri apkUri = FileProvider.getUriForFile(context, context.getPackageName() + ".net.mftd313.updatelibrary.fileprovider", apkFile);
         Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         install.setData(apkUri);
         install.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(install);
+        context.stopService(new Intent(context, UpdateInstallService.class));
     }
 
     static void beginDownload(Context context, Uri uri) {
+        if (UpdateLibrary.getDownloadStartedListener() != null) {
+            UpdateLibrary.getDownloadStartedListener().onDownloadStarted(context, uri);
+        }
         File file = new File(context.getExternalFilesDir(null), uri.getLastPathSegment());
         if (file.exists()) {
-            if(isDownloadedSuccessfully(context, uri)){
-                beginInstall(context, uri);
+            if (isDownloadSuccess(context, uri)) {
+                if (UpdateLibrary.getReadyToInstallListener() != null) {
+                    UpdateLibrary.getReadyToInstallListener().onReadyToInstall(context, uri);
+                }
                 return;
             }
             else {
@@ -45,8 +58,8 @@ final class UpdateCore {
         UpdateRepository.getInstance(context).setLastDownloadId(downloadID);
     }
 
-    static boolean isDownloading(Context context, Uri uri) {
-        boolean isDownloading = false;
+    static boolean isDownloadRunning(Context context, Uri uri) {
+        boolean isDownloadRunning = false;
 
         DownloadManager downloadManager = (DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
 
@@ -55,33 +68,33 @@ final class UpdateCore {
         while (cursor.moveToNext()) {
             downingURI = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_URI));
             if (downingURI.equalsIgnoreCase(uri.toString())) {
-                isDownloading = true;
+                isDownloadRunning = true;
                 break;
             }
         }
         cursor.close();
-        return isDownloading;
+        return isDownloadRunning;
     }
 
-    static boolean isPendingDownload(Context context, Uri uri) {
-        boolean isDownloading = false;
+    static boolean isDownloadPending(Context context, Uri uri) {
+        boolean isPending = false;
 
         DownloadManager downloadManager = (DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);
 
-        Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterByStatus(DownloadManager.STATUS_PENDING));
+        Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterByStatus(DownloadManager.STATUS_PENDING | DownloadManager.STATUS_PAUSED));
         String downingURI;
         while (cursor.moveToNext()) {
             downingURI = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_URI));
             if (downingURI.equalsIgnoreCase(uri.toString())) {
-                isDownloading = true;
+                isPending = true;
                 break;
             }
         }
         cursor.close();
-        return isDownloading;
+        return isPending;
     }
 
-    static boolean isDownloadedSuccessfully(Context context, Uri uri) {
+    static boolean isDownloadSuccess(Context context, Uri uri) {
         boolean isDownloaded = false;
 
         DownloadManager downloadManager = (DownloadManager) context.getSystemService(DOWNLOAD_SERVICE);

@@ -1,90 +1,148 @@
 package net.mftd313.updatelibrary;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.net.Uri;
-import android.os.Build;
 
-import static android.content.Context.NOTIFICATION_SERVICE;
+import net.mftd313.updatelibrary.listeners.UpdateDownloadStartedListener;
+import net.mftd313.updatelibrary.listeners.UpdateInstallStartedListener;
+import net.mftd313.updatelibrary.listeners.UpdateReadyToDownloadListener;
+import net.mftd313.updatelibrary.listeners.UpdateReadyToInstallListener;
+
+import java.io.File;
 
 public final class UpdateLibrary {
 
-    public static UpdateManager with(Context context){
-        return new UpdateManager(context);
+    private static UpdateReadyToDownloadListener readyToDownloadListener;
+    private static UpdateDownloadStartedListener downloadStartedListener;
+    private static UpdateReadyToInstallListener readyToInstallListener;
+    private static UpdateInstallStartedListener installStartedListener;
+    private static UpdateManager updateManager;
+
+    public static UpdateInitializer with(Context context) {
+        return new UpdateInitializer(context);
     }
 
-    public static final class UpdateManager {
+    public static UpdateManager getUpdateManager() {
+        return updateManager;
+    }
+
+    static UpdateDownloadStartedListener getDownloadStartedListener() {
+        return downloadStartedListener;
+    }
+
+    static UpdateReadyToInstallListener getReadyToInstallListener() {
+        return readyToInstallListener;
+    }
+
+    static UpdateInstallStartedListener getInstallStartedListener() {
+        return installStartedListener;
+    }
+
+    public static final class UpdateInitializer {
 
         Context context;
         int notificationSmallIconResource = -1;
 
-        UpdateManager(Context context){
+        private UpdateInitializer(Context context) {
             this.context = context;
         }
 
-        public UpdateManager setNotificationSmallIconResource(int resourceId){
+        public UpdateInitializer setUpdateReadyToDownloadListener(UpdateReadyToDownloadListener listener) {
+            readyToDownloadListener = listener;
+            return this;
+        }
+
+        public UpdateInitializer setUpdateDownloadStartedListener(UpdateDownloadStartedListener listener) {
+            downloadStartedListener = listener;
+            return this;
+        }
+
+        public UpdateInitializer setUpdateReadyToInstallListener(UpdateReadyToInstallListener listener) {
+            readyToInstallListener = listener;
+            return this;
+        }
+
+        public UpdateInitializer setUpdateInstallStartedListener(UpdateInstallStartedListener listener) {
+            installStartedListener = listener;
+            return this;
+        }
+
+        public UpdateInitializer setNotificationSmallIconResource(int resourceId) {
             notificationSmallIconResource = resourceId;
             return this;
         }
 
-        public UpdateManager setDownloadedNotificationSmallIconResource(int resourceId){
+        public UpdateInitializer setDownloadedNotificationSmallIconResource(int resourceId) {
             UpdateRepository.getInstance(context).setDownloadedNotificationSmallIconResource(resourceId);
             return this;
         }
 
-        public UpdateManager setDownloadedNotificationLargeIconResource(int resourceId){
+        public UpdateInitializer setDownloadedNotificationLargeIconResource(int resourceId) {
             UpdateRepository.getInstance(context).setDownloadedNotificationLargeIconResource(resourceId);
             return this;
         }
 
-        public UpdateManager setDownloadedNotificationTitle(String title){
+        public UpdateInitializer setDownloadedNotificationTitle(String title) {
             UpdateRepository.getInstance(context).setDownloadedNotificationTitle(title);
             return this;
         }
 
-        public UpdateManager setDownloadedNotificationText(String text){
+        public UpdateInitializer setDownloadedNotificationText(String text) {
             UpdateRepository.getInstance(context).setDownloadedNotificationText(text);
             return this;
         }
 
-        public UpdateManager setDownloadingNotificationTitle(String title){
+        public UpdateInitializer setDownloadingNotificationTitle(String title) {
             UpdateRepository.getInstance(context).setDownloadingNotificationTitle(title);
             return this;
         }
 
-        public UpdateManager setDownloadingNotificationText(String text){
+        public UpdateInitializer setDownloadingNotificationText(String text) {
             UpdateRepository.getInstance(context).setDownloadingNotificationText(text);
             return this;
         }
 
-        public void update(Uri uri){
+        public void init(Uri uri) {
 
-            String url = uri.toString();
-            UpdateRepository.getInstance(context).setLastDownloadUrl(url);
-            if (url.isEmpty()) {
+            UpdateRepository.getInstance(context).setLastDownloadUrl(uri.toString());
+            updateManager = new UpdateManager(uri);
+
+            if (UpdateCore.isDownloadRunning(context, uri) ||
+                    UpdateCore.isDownloadPending(context, uri)) {
+                if (downloadStartedListener != null) {
+                    downloadStartedListener.onDownloadStarted(context, uri);
+                }
                 return;
             }
 
-            if (UpdateCore.isDownloading(context, uri) ||
-                    UpdateCore.isPendingDownload(context, uri)) {
+            File file = new File(context.getExternalFilesDir(null), uri.getLastPathSegment());
+            if (file.exists() && UpdateCore.isDownloadSuccess(context, uri)) {
+                if (readyToInstallListener != null) {
+                    readyToInstallListener.onReadyToInstall(context, uri);
+                }
                 return;
             }
 
-            initNotificationChannel();
+            if (readyToDownloadListener != null) {
+                readyToDownloadListener.onReadyToDownload(context, uri);
+            }
+        }
+    }
+
+    public static final class UpdateManager {
+
+        Uri uri;
+
+        private UpdateManager(Uri uri) {
+            this.uri = uri;
+        }
+
+        public void download(Context context) {
             UpdateCore.beginDownload(context, uri);
         }
 
-        private void initNotificationChannel() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                final String channelId = context.getString(R.string.app_name);
-                final String channelName = context.getString(R.string.app_name);
-                final NotificationChannel defaultChannel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_MIN);
-                final NotificationManager manager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
-                if (manager != null) {
-                    manager.createNotificationChannel(defaultChannel);
-                }
-            }
+        public void install(Context context) {
+            UpdateCore.beginInstall(context, uri);
         }
     }
 }

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Build;
 
 import static android.content.Context.DOWNLOAD_SERVICE;
@@ -27,6 +28,10 @@ public final class UpdateDownloadCompleteReceiver extends BroadcastReceiver {
         if (cursor.moveToFirst()) {
             int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
             if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                if (UpdateLibrary.getReadyToInstallListener() != null) {
+                    UpdateLibrary.getReadyToInstallListener().onReadyToInstall(context,
+                            Uri.parse(UpdateRepository.getInstance(context).getLastDownloadUrl()));
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(new Intent(context, UpdateInstallService.class));
                 } else {
