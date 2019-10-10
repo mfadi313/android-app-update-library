@@ -8,6 +8,8 @@ This library simplifies the process of downloading and installing new version of
 
 String url = "https://example.com/your_app_new_version.apk";
 
+final ProgressDialog progressDialog = new ProgressDialog(this);
+
 UpdateLibrary.with(AppUpdateActivity.this)
 
     // while downloading notification
@@ -20,8 +22,36 @@ UpdateLibrary.with(AppUpdateActivity.this)
     .setDownloadedNotificationTitle(getString(R.string.app_name))
     .setDownloadedNotificationText(getString(R.string.download_completed))
     
-    // start update
-    .update(Uri.parse(url));
+    .setUpdateReadyToDownloadListener(new UpdateReadyToDownloadListener() {
+        @Override
+        public void onReadyToDownload(final Context context, Uri uri) {
+            UpdateLibrary.getUpdateManager().download(context);
+            progressDialog.hide();
+        }
+    })
+    .setUpdateDownloadStartedListener(new UpdateDownloadStartedListener() {
+        @Override
+        public void onDownloadStarted(Context context, Uri uri) {
+            progressDialog.setMessage(getString(R.string.downloading_new_version));
+            progressDialog.show();
+        }
+    })
+    .setUpdateReadyToInstallListener(new UpdateReadyToInstallListener() {
+        @Override
+        public void onReadyToInstall(final Context context, Uri uri) {
+            UpdateLibrary.getUpdateManager().install(context);
+            progressDialog.hide();
+        }
+    })
+    .setUpdateInstallStartedListener(new UpdateInstallStartedListener() {
+        @Override
+        public void onInstallStarted(Context context, Uri uri) {
+            progressDialog.setMessage(getString(R.string.installing_new_version));
+            progressDialog.show();
+        }
+    })
+
+    .init(Uri.parse(url));
 
 ```
 
@@ -46,7 +76,7 @@ Add the dependency:
 
 dependencies {
     ...
-    implementation 'com.github.mfadi313:android-app-update-library:1.0.0'
+    implementation 'com.github.mfadi313:android-app-update-library:1.1.1'
 }
 
 ```
