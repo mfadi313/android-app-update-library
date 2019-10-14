@@ -31,8 +31,7 @@ public final class UpdateDownloadCompleteReceiver extends BroadcastReceiver {
                 if (UpdateLibrary.getReadyToInstallListener() != null) {
                     UpdateLibrary.getReadyToInstallListener().onReadyToInstall(context,
                             Uri.parse(UpdateRepository.getInstance(context).getLastDownloadUrl()));
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(new Intent(context, UpdateInstallService.class));
                 } else {
                     context.startService(new Intent(context, UpdateInstallService.class));
