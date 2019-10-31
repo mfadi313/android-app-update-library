@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.content.FileProvider;
 
 import java.io.File;
@@ -22,10 +23,20 @@ final class UpdateCore {
             UpdateLibrary.getInstallStartedListener().onInstallStarted(context, uri);
         }
         File apkFile = new File(context.getExternalFilesDir(null), uri.getLastPathSegment());
-        Uri apkUri = FileProvider.getUriForFile(context, context.getPackageName() + ".net.mftd313.updatelibrary.fileprovider", apkFile);
-        Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        Uri apkUri;
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            apkUri = FileProvider.getUriForFile(context,
+                    context.getPackageName() + ".net.mftd313.updatelibrary.fileprovider", apkFile);
+        } else {
+            apkUri = Uri.parse("file:/" + apkFile.getAbsolutePath());
+        }
+
+        //Intent install = new Intent(Intent.ACTION_INSTALL_PACKAGE);
+        Intent install = new Intent(Intent.ACTION_VIEW);
         install.setData(apkUri);
-        install.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_ACTIVITY_NEW_TASK);
+        install.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_CLEAR_TOP);
         context.startActivity(install);
         context.stopService(new Intent(context, UpdateInstallService.class));
     }
