@@ -43,8 +43,8 @@ public class MainActivity extends AppCompatActivity {
 
                 .setDownloadedNotificationTitle(getString(R.string.app_name))
                 .setDownloadedNotificationText(getString(R.string.download_completed))
-                .setDownloadedNotificationSmallIconResource(R.drawable.ic_launcher_foreground)
-                .setDownloadedNotificationLargeIconResource(R.drawable.ic_launcher_foreground)
+                .setDownloadedNotificationSmallIconResource(R.mipmap.ic_launcher_round)
+                .setDownloadedNotificationLargeIconResource(R.mipmap.ic_launcher_round)
 
                 .setUpdateReadyToDownloadListener(new UpdateReadyToDownloadListener() {
                     @Override
