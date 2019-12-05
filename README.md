@@ -36,6 +36,15 @@ UpdateLibrary.with(AppUpdateActivity.this)
             progressDialog.show();
         }
     })
+    .setUpdateDownloadFailedListener(new UpdateDownloadFailedListener() {
+        @Override
+        public void onDownloadFailed(Context context, Uri uri) {
+            progressDialog.hide();
+            Snackbar.make(fab, getString(R.string.download_failed), Snackbar.LENGTH_LONG)
+                    .show();
+            fab.show();
+        }
+    })
     .setUpdateReadyToInstallListener(new UpdateReadyToInstallListener() {
         @Override
         public void onReadyToInstall(final Context context, Uri uri) {
