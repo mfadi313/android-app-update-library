@@ -5,6 +5,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -13,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import net.mftd313.updatelibrary.UpdateLibrary;
+import net.mftd313.updatelibrary.listeners.UpdateDownloadFailedListener;
 import net.mftd313.updatelibrary.listeners.UpdateDownloadStartedListener;
 import net.mftd313.updatelibrary.listeners.UpdateInstallStartedListener;
 import net.mftd313.updatelibrary.listeners.UpdateReadyToDownloadListener;
@@ -65,6 +67,15 @@ public class MainActivity extends AppCompatActivity {
                     public void onDownloadStarted(Context context, Uri uri) {
                         progressDialog.setMessage(getString(R.string.downloading_new_version));
                         progressDialog.show();
+                    }
+                })
+                .setUpdateDownloadFailedListener(new UpdateDownloadFailedListener() {
+                    @Override
+                    public void onDownloadFailed(Context context, Uri uri) {
+                        progressDialog.hide();
+                        Snackbar.make(fab, getString(R.string.download_failed), Snackbar.LENGTH_LONG)
+                                .show();
+                        fab.show();
                     }
                 })
                 .setUpdateReadyToInstallListener(new UpdateReadyToInstallListener() {

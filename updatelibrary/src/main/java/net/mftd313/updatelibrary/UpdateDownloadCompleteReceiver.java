@@ -37,6 +37,11 @@ public final class UpdateDownloadCompleteReceiver extends BroadcastReceiver {
                 } else {
                     context.startService(new Intent(context, UpdateInstallService.class));
                 }
+            } else if (status == DownloadManager.STATUS_FAILED) {
+                if (UpdateLibrary.getDownloadFailedListener() != null) {
+                    UpdateLibrary.getDownloadFailedListener().onDownloadFailed(context,
+                            Uri.parse(UpdateRepository.getInstance(context).getLastDownloadUrl()));
+                }
             }
         }
     }

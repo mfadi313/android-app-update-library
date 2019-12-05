@@ -2,6 +2,7 @@
     <string name="app_name">Update Library Sample</string>
     <string name="action_settings">Settings</string>
     <string name="downloading_new_version">Downloading New Version</string>
+    <string name="download_failed">Download Failed Please Try Again Later</string>
     <string name="installing_new_version">Installing New Version</string>
     <string name="download_completed">New Version Download Completed</string>
     <string name="updating">Updating..</string>

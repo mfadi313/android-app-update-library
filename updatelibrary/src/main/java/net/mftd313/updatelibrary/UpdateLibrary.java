@@ -3,6 +3,7 @@ package net.mftd313.updatelibrary;
 import android.content.Context;
 import android.net.Uri;
 
+import net.mftd313.updatelibrary.listeners.UpdateDownloadFailedListener;
 import net.mftd313.updatelibrary.listeners.UpdateDownloadStartedListener;
 import net.mftd313.updatelibrary.listeners.UpdateInstallStartedListener;
 import net.mftd313.updatelibrary.listeners.UpdateReadyToDownloadListener;
@@ -14,6 +15,7 @@ public final class UpdateLibrary {
 
     private static UpdateReadyToDownloadListener readyToDownloadListener;
     private static UpdateDownloadStartedListener downloadStartedListener;
+    private static UpdateDownloadFailedListener downloadFailedListener;
     private static UpdateReadyToInstallListener readyToInstallListener;
     private static UpdateInstallStartedListener installStartedListener;
     private static UpdateManager updateManager;
@@ -28,6 +30,10 @@ public final class UpdateLibrary {
 
     static UpdateDownloadStartedListener getDownloadStartedListener() {
         return downloadStartedListener;
+    }
+
+    static UpdateDownloadFailedListener getDownloadFailedListener() {
+        return downloadFailedListener;
     }
 
     static UpdateReadyToInstallListener getReadyToInstallListener() {
@@ -54,6 +60,11 @@ public final class UpdateLibrary {
 
         public UpdateInitializer setUpdateDownloadStartedListener(UpdateDownloadStartedListener listener) {
             downloadStartedListener = listener;
+            return this;
+        }
+
+        public UpdateInitializer setUpdateDownloadFailedListener(UpdateDownloadFailedListener listener) {
+            downloadFailedListener = listener;
             return this;
         }
 
